@@ -1,0 +1,31 @@
+name: Doctolib Termin-Watcher
+
+on:
+  schedule:
+    # Alle 5 Minuten. GitHub kann den Start etwas verzoegern (5-15 Min),
+    # das ist normal und fuer diesen Zweck voellig okay.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:   # Erlaubt manuelles Starten ueber den "Run workflow"-Knopf
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code holen
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Abhaengigkeiten installieren
+        run: pip install requests
+
+      - name: Termine pruefen
+        run: python watcher.py
+        env:
+          AVAILABILITIES_URL: ${{ secrets.AVAILABILITIES_URL }}
+          BOOKING_URL: ${{ secrets.BOOKING_URL }}
+          MY_APPOINTMENT: ${{ secrets.MY_APPOINTMENT }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
