@@ -2,10 +2,15 @@ name: Doctolib Termin-Watcher
 
 on:
   schedule:
-    # Alle 5 Minuten. GitHub kann den Start etwas verzoegern (5-15 Min),
-    # das ist normal und fuer diesen Zweck voellig okay.
-    - cron: "*/5 * * * *"
-  workflow_dispatch:   # Erlaubt manuelles Starten ueber den "Run workflow"-Knopf
+    # Stoesst die Schleife regelmaessig neu an (Sicherheitsnetz).
+    # Der eigentliche 5-Minuten-Takt passiert INNERHALB des Laufs, siehe unten.
+    - cron: "0 */3 * * *"   # alle 3 Stunden
+  workflow_dispatch:        # manuelles Starten ueber "Run workflow"
+
+# Sorgt dafuer, dass sich nicht mehrere Laeufe gleichzeitig ins Gehege kommen.
+concurrency:
+  group: doctolib-watcher
+  cancel-in-progress: false
 
 jobs:
   check:
@@ -22,10 +27,15 @@ jobs:
       - name: Abhaengigkeiten installieren
         run: pip install requests
 
-      - name: Termine pruefen
-        run: python watcher.py
+      - name: Dauer-Check (alle 5 Min, ca. 4 Stunden lang)
         env:
           AVAILABILITIES_URL: ${{ secrets.AVAILABILITIES_URL }}
           BOOKING_URL: ${{ secrets.BOOKING_URL }}
           MY_APPOINTMENT: ${{ secrets.MY_APPOINTMENT }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          for i in $(seq 1 48); do
+            echo "--- Check $i von 48 ---"
+            python watcher.py || true
+            sleep 300
+          done
