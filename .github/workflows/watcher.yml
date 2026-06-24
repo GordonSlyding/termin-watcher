@@ -29,4 +29,4 @@ jobs:
         env:
           WATCH_CONFIG: ${{ secrets.WATCH_CONFIG }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-        run: python watcher.py
+        run: python -u watcher.py
