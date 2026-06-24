@@ -27,6 +27,7 @@ jobs:
 
       - name: Termine pruefen (ca. 4 Std, alle 5 Min, alle Aerzte)
         env:
+          TZ: Europe/Berlin
           WATCH_CONFIG: ${{ secrets.WATCH_CONFIG }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: python -u watcher.py
