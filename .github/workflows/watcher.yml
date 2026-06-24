@@ -2,12 +2,9 @@ name: Doctolib Termin-Watcher
 
 on:
   schedule:
-    # Stoesst die Schleife regelmaessig neu an (Sicherheitsnetz).
-    # Der eigentliche 5-Minuten-Takt passiert INNERHALB des Laufs, siehe unten.
-    - cron: "0 */3 * * *"   # alle 3 Stunden
+    - cron: "0 */3 * * *"   # alle 3 Std neu anstossen (Sicherheitsnetz)
   workflow_dispatch:        # manuelles Starten ueber "Run workflow"
 
-# Sorgt dafuer, dass sich nicht mehrere Laeufe gleichzeitig ins Gehege kommen.
 concurrency:
   group: doctolib-watcher
   cancel-in-progress: false
@@ -15,6 +12,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 350     # das Skript laeuft ~4 Std; harte Obergrenze waeren 6 Std
     steps:
       - name: Code holen
         uses: actions/checkout@v4
@@ -27,15 +25,8 @@ jobs:
       - name: Abhaengigkeiten installieren
         run: pip install requests
 
-      - name: Dauer-Check (alle 5 Min, ca. 4 Stunden lang)
+      - name: Termine pruefen (ca. 4 Std, alle 5 Min, alle Aerzte)
         env:
-          AVAILABILITIES_URL: ${{ secrets.AVAILABILITIES_URL }}
-          BOOKING_URL: ${{ secrets.BOOKING_URL }}
-          MY_APPOINTMENT: ${{ secrets.MY_APPOINTMENT }}
+          WATCH_CONFIG: ${{ secrets.WATCH_CONFIG }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-        run: |
-          for i in $(seq 1 48); do
-            echo "--- Check $i von 48 ---"
-            python watcher.py || true
-            sleep 300
-          done
+        run: python watcher.py
